@@ -1,0 +1,7 @@
+torch
+numpy
+tqdm
+scikit-learn
+colorama
+transformers
+faiss-gpu
