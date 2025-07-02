@@ -1,4 +1,4 @@
-DATASET=instrument
+DATASET=Musical_Instruments
 DEVICE=cuda:0
 
 

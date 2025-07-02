@@ -18,7 +18,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--seed', type=int, default=2020, help='random seed')
-    parser.add_argument("--dataset", type=str, default="instrument")
+    parser.add_argument("--dataset", type=str, default="Musical_Instruments", help="dataset name")
     parser.add_argument("--bidirectional", type=bool, default=False)
     parser.add_argument('--n_heads', type=int, default=2)
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')

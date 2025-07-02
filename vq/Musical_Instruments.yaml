@@ -1,4 +1,4 @@
-dataset: instrument
+dataset: Musical_Instruments
 data_path: ../dataset
 map_path: .emb_map.json
 code_num: 256
@@ -6,4 +6,4 @@ n_codebooks: 20
 faiss_omp_num_threads: 32
 pca_size: 128
 text_types: [title, brand, features, categories, description]
-semantic_ids_path: ../dataset/instrument/
+semantic_ids_path: ../dataset/Musical_Instruments/

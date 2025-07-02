@@ -11,7 +11,7 @@ from sklearn.decomposition import PCA
 def parse_arguments():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--config', type=str, default="instrument.yaml")
+    parser.add_argument('--config', type=str, default="Musical_Instruments.yaml")
     parser.add_argument('--type', type=str, default='pq', help='pq or rq')
 
     args, _ = parser.parse_known_args()
