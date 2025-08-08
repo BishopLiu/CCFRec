@@ -150,4 +150,18 @@ python main.py \
 ```
 
 
+## Citation
 
+If you find our research valuable, please consider citing it as follows:
+```
+@inproceedings{ccfrec,
+author = {Liu, Enze and Zheng, Bowen and Zhao, Wayne Xin and Wen, Ji-Rong},
+title = {Bridging Textual-Collaborative Gap through Semantic Codes for Sequential Recommendation},
+year = {2025},
+publisher = {Association for Computing Machinery},
+booktitle = {Proceedings of the 31st ACM SIGKDD Conference on Knowledge Discovery and Data Mining V.2},
+pages = {1788–1798},
+location = {Toronto ON, Canada},
+series = {KDD '25}
+}
+```
