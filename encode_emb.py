@@ -28,7 +28,7 @@ if __name__ == "__main__":
     
     
     meta_text_dict = json.load(open(os.path.join(dataset_path, f'{dataset}.meta.json'), 'r'))
-    attr_list = args.meta_types
+    attr_list = args.text_types
 
     for attr in attr_list:
         if attr not in meta_text_dict["1"].keys():
@@ -40,6 +40,6 @@ if __name__ == "__main__":
         embs = text_embedding_model.encode(sorted_text, convert_to_numpy=True, batch_size=256, show_progress_bar=True)
 
         print(embs.shape)
-        np.save(dataset_path + f'{dataset}.t5.{attr}.emb.npy', embs)
+        np.save(os.path.join(dataset_path, f'{dataset}.t5.{attr}.emb.npy'), embs)
         print(f"Saved {dataset}.t5.{attr}.emb.npy")
 

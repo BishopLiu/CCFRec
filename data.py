@@ -132,8 +132,8 @@ class Collator(object):
 
 
         return dict(item_inters=item_inters.long(),
-                    code_inters_a=code_inters.long(),
+                    code_inters=code_inters.long(),
                     inter_lens=inter_lens.long(),
                     targets=targets.long(),
-                    mask_targets_a=mask_targets.long())
+                    mask_targets=mask_targets.long())
 

@@ -99,7 +99,6 @@ class CCFRec(SeqBaseModel):
         self.attn_dropout_prob_cross = args.dropout_prob_cross
         self.hidden_act = "gelu"
         self.layer_norm_eps = 1e-12
-        self.false_neg = args.FN
 
         self.initializer_range = 0.02
 
