@@ -79,6 +79,11 @@ class BaseTrainer(object):
 
         self.device = device
 
+        # AMP (Automatic Mixed Precision) for faster training
+        self.use_amp = args.use_amp if hasattr(args, 'use_amp') else True
+        self.amp_dtype = torch.float16
+        self.scaler = torch.amp.GradScaler(device.type) if self.use_amp and device.type == 'cuda' else None
+
         self.ckpt_dir = args.ckpt_dir
         self.ckpt_dir = os.path.join(self.ckpt_dir, self.args.dataset, args.save_file_name)
         ensure_dir(self.ckpt_dir)
@@ -108,9 +113,16 @@ class BaseTrainer(object):
                 params, lr=learning_rate, weight_decay=weight_decay
             )
         elif learner.lower() == 'adamw':
-            optimizer = optim.AdamW(
-                params, lr=learning_rate, weight_decay=weight_decay
-            )
+            # Use fused AdamW for faster training on CUDA
+            try:
+                optimizer = optim.AdamW(
+                    params, lr=learning_rate, weight_decay=weight_decay, fused=True
+                )
+            except (RuntimeError, TypeError):
+                # Fallback if fused is not supported (e.g., CPU or older PyTorch)
+                optimizer = optim.AdamW(
+                    params, lr=learning_rate, weight_decay=weight_decay
+                )
         else:
             self.logger.warning(
                 "Received unrecognized optimizer, set default Adam optimizer"
@@ -152,7 +164,7 @@ class BaseTrainer(object):
 
             self.optimizer.zero_grad()
             loss = self.model.calculate_loss(item_inters, inter_lens, labels)
-    
+
             self._check_nan(loss)
             loss.backward()
             self.optimizer.step()
@@ -240,7 +252,7 @@ class BaseTrainer(object):
                     self.best_score = total_metrics[self.valid_metric]
                     self.best_result = total_metrics
                     cur_eval_step = 0
-   
+
                     self._save_checkpoint(epoch_idx, verbose=verbose)
                 else:
                     cur_eval_step += 1
@@ -265,7 +277,7 @@ class BaseTrainer(object):
 
     @torch.no_grad()
     def _test_epoch(self, test_data=None, load_best_model=False, model_file=None, verbose=True):
-        
+
         if test_data is None:
             test_data = self.test_data
 
@@ -320,7 +332,7 @@ class CCFTrainer(BaseTrainer):
     def _train_epoch(self, epoch_idx, verbose=True):
 
         self.model.train()
-        
+
         total_num = 0
         total_loss = defaultdict(float)
         iter_data = tqdm(
@@ -341,12 +353,22 @@ class CCFTrainer(BaseTrainer):
 
             self.optimizer.zero_grad()
 
-            loss = self.model.calculate_loss(item_inters, inter_lens, labels,
-                                             code_inters, mask_labels)
-    
-            self._check_nan(loss['loss'])
-            loss['loss'].backward()
-            self.optimizer.step()
+            # Automatic Mixed Precision (AMP) for faster training
+            if self.scaler is not None:
+                with torch.autocast(device_type=self.device.type, dtype=self.amp_dtype):
+                    loss = self.model.calculate_loss(item_inters, inter_lens, labels,
+                                                     code_inters, mask_labels)
+                self._check_nan(loss['loss'])
+                self.scaler.scale(loss['loss']).backward()
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            else:
+                loss = self.model.calculate_loss(item_inters, inter_lens, labels,
+                                                 code_inters, mask_labels)
+                self._check_nan(loss['loss'])
+                loss['loss'].backward()
+                self.optimizer.step()
+
             self.lr_scheduler.step()
 
             iter_data.set_postfix(loss=loss['loss'].item())
@@ -397,10 +419,10 @@ class CCFTrainer(BaseTrainer):
 
             _metrics = self.evaluate(scores, labels)
             for m, v in _metrics.items():
-                metrics[m] += v
+                metrics[m] += v.item()
 
         for m in metrics:
-            metrics[m] = metrics[m] / total
+            metrics[m] = round(metrics[m] / total, 5)
 
         return metrics
 

@@ -15,17 +15,19 @@ python main.py \
     --code_level=20 \
     --n_codes_per_lel=256 \
     --max_his_len=20 \
-    --batch_size=400 \
+    --train_batch_size=400 \
+    --eval_batch_size=1024 \
     --dropout_prob=0.3 \
     --dropout_prob_cross=0.3 \
     --n_layers=2 \
     --n_heads=2 \
     --embedding_size=128 \
     --hidden_size=512 \
-    --device=$DEVICE
+    --device=$DEVICE \
+    --use_amp
 
-    
 
 
-    
+
+
 

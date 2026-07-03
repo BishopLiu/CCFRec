@@ -25,11 +25,12 @@ def parse_arguments():
     parser.add_argument('--tau', type=float, default=0.07, help='temperature')
     parser.add_argument('--cl_weight', type=float, default=0.1, help='contrastive loss weight')
     parser.add_argument('--mlm_weight', type=float, default=0.1, help='mlm weight')
-    parser.add_argument('--neg_num', type=int, default=49)
+    parser.add_argument('--neg_num', type=int, default=10000, help='number of negative samples for recommendation loss')
     parser.add_argument('--text_types', nargs='+', type=str, default="meta")
 
     parser.add_argument('--epochs', type=int, default=500, help='number of epochs')
-    parser.add_argument('--batch_size', type=int, default=2048, help='batch size')
+    parser.add_argument('--train_batch_size', type=int, default=512, help='train batch size')
+    parser.add_argument('--eval_batch_size', type=int, default=1024, help='eval batch size')
     parser.add_argument('--num_workers', type=int, default=8)
     parser.add_argument('--eval_step', type=int, default=1, help='eval step')
     parser.add_argument('--learner', type=str, default="AdamW", help='optimizer')
@@ -61,7 +62,13 @@ def parse_arguments():
     parser.add_argument("--ckpt_dir", type=str,
                         default="./myckpt/",
                         help="output directory for model")
+    parser.add_argument('--use_amp', action='store_true', default=True,
+                        help='Use Automatic Mixed Precision for faster training')
+    parser.add_argument('--no_compile', action='store_true', default=False,
+                        help='Disable torch.compile')
+
     args, _ = parser.parse_known_args()
+
     return args
 
 if __name__=="__main__":
@@ -76,11 +83,11 @@ if __name__=="__main__":
     init_logger(args_dict, args.save_file_name+'.log')
 
     logger = getLogger()
-    
+
     log(args_dict, logger)
-    
+
     device = torch.device(args.device)
-    
+
     data_path = args.data_path
     dataset = args.dataset
     dataset_path = os.path.join(data_path, dataset)
@@ -94,13 +101,13 @@ if __name__=="__main__":
     collator = Collator(args)
 
     train_data_loader = DataLoader(train_dataset, num_workers=args.num_workers, collate_fn=collator,
-                                batch_size=args.batch_size, shuffle=True, pin_memory=False)
+                                batch_size=args.train_batch_size, shuffle=True, pin_memory=True)
 
     val_data_loader = DataLoader(val_dataset, num_workers=args.num_workers, collate_fn=collator,
-                                    batch_size=args.batch_size, shuffle=False, pin_memory=False)
+                                    batch_size=args.eval_batch_size, shuffle=False, pin_memory=True)
 
     test_data_loader = DataLoader(test_dataset, num_workers=args.num_workers, collate_fn=collator,
-                                    batch_size=args.batch_size, shuffle=False, pin_memory=False)
+                                    batch_size=args.eval_batch_size, shuffle=False, pin_memory=True)
 
     text_embs = []
     for ttype in args.text_types:
@@ -119,6 +126,17 @@ if __name__=="__main__":
     for i in range(len(args.text_types)):
         model.item_text_embedding[i].weight.data[1:] = torch.tensor(text_embs[i], dtype=torch.float32, device=device)
 
+    # Build cache of frozen text embeddings (avoids repeated lookups)
+    model.build_text_emb_cache()
+
+    # torch.compile for faster training (PyTorch >= 2.0)
+    if not args.no_compile:
+        try:
+            model = torch.compile(model, mode="reduce-overhead")
+            log("torch.compile enabled (mode=reduce-overhead)", logger)
+        except (AttributeError, RuntimeError) as e:
+            log(f"torch.compile not available or failed: {e}. Continuing without compilation.", logger)
+
     trainer = CCFTrainer(args, model, train_data_loader, val_data_loader, test_data_loader, device)
 
     log(model, logger)
@@ -128,4 +146,3 @@ if __name__=="__main__":
 
     log(f"Best Validation Score: {best_score}", logger)
     log(f"Test Results: {test_results}", logger)
-    

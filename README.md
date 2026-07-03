@@ -77,7 +77,7 @@ python main.py \
     --code_level=20 \
     --n_codes_per_lel=256 \
     --max_his_len=20 \
-    --batch_size=400 \
+    --train_batch_size=400 \
     --dropout_prob=0.3 \
     --dropout_prob_cross=0.3 \
     --n_layers=2 \
@@ -98,7 +98,7 @@ python main.py \
     --code_level=20 \
     --n_codes_per_lel=256 \
     --max_his_len=20 \
-    --batch_size=400 \
+    --train_batch_size=400 \
     --dropout_prob=0.2 \
     --dropout_prob_cross=0.1 \
     --n_layers=2 \
@@ -119,7 +119,7 @@ python main.py \
     --code_level=20 \
     --n_codes_per_lel=256 \
     --max_his_len=20 \
-    --batch_size=400 \
+    --train_batch_size=400 \
     --dropout_prob=0.4 \
     --dropout_prob_cross=0.1 \
     --n_layers=2 \
@@ -140,7 +140,7 @@ python main.py \
     --code_level=20 \
     --n_codes_per_lel=256 \
     --max_his_len=20 \
-    --batch_size=400 \
+    --train_batch_size=400 \
     --dropout_prob=0.2 \
     --dropout_prob_cross=0.2 \
     --n_layers=2 \
